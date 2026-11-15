@@ -1,10 +1,14 @@
 package com.example.forfaitmeter;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.TrafficStats;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
@@ -66,6 +70,16 @@ public class MainActivity extends Activity {
             }
         });
         root.addView(start);
+
+        Button overlay = new Button(this);
+        overlay.setText("Afficher le compteur par-dessus les apps");
+        overlay.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showOverlay();
+            }
+        });
+        root.addView(overlay);
 
         setContentView(root);
     }
@@ -172,5 +186,21 @@ public class MainActivity extends Activity {
         else if (msLeft < 3 * HOUR_MS) warn = "\nAttention : expire dans moins de 3 h";
 
         detail.setText("sur " + (bundleBytes / MB) + " Mo · " + time + warn);
+    }
+
+    private void showOverlay() {
+        if (!Settings.canDrawOverlays(this)) {
+            Intent i = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivity(i);
+            status.setText("Autorisez l'affichage par-dessus les autres apps, puis revenez et appuyez à nouveau.");
+            return;
+        }
+        Intent s = new Intent(this, OverlayService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(s);
+        } else {
+            startService(s);
+        }
     }
 }
